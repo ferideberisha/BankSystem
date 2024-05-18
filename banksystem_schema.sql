@@ -18,10 +18,9 @@ CREATE TABLE Transaction (
     CONSTRAINT fk_resulting_account FOREIGN KEY (resultingAccountId) REFERENCES Account(accountId)
 );
 
-CREATE TABLE Bank (
+ CREATE TABLE Bank (
     bankName VARCHAR(100) PRIMARY KEY,
     totalTransactionFeeAmount DECIMAL(10, 2),
     totalTransferAmount DECIMAL(10, 2),
-    flatFee DECIMAL(10, 2),
-    percentFee DECIMAL(5, 2)
+    flatFee DECIMAL(10, 2)
 );
