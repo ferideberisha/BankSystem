@@ -11,11 +11,11 @@ public class Bank {
     private double totalTransferAmount;
     private double flatFee;
 
-    public Bank(String bankName, double flatFee) {
+    public Bank(String bankName, double flatFee, double totalTransactionFeeAmount, double totalTransferAmount) {
         this.bankName = bankName;
         this.flatFee = flatFee;
-        this.totalTransactionFeeAmount = 0;
-        this.totalTransferAmount = 0;
+        this.totalTransactionFeeAmount = totalTransactionFeeAmount;
+        this.totalTransferAmount = totalTransferAmount;
     }
     
     public void saveToDatabase() throws SQLException {
@@ -41,7 +41,9 @@ public class Bank {
                     if (rs.next()) {
                         return new Bank(
                             rs.getString("bankName"),
-                            rs.getDouble("flatFee")
+                            rs.getDouble("flatFee"),
+                            rs.getDouble("totalTransactionFeeAmount"),
+                            rs.getDouble("totalTransferAmount")
                         );
                     } else {
                         throw new IllegalArgumentException("Bank not found");
@@ -72,13 +74,14 @@ public class Bank {
         // Check if accounts exist
         if (originatingAccount != null && resultingAccount != null) {
             // Perform transaction
-            double totalAmount = transaction.getAmount() + flatFee;
+            double transactionFee = flatFee;
+            double totalAmount = transaction.getAmount() + transactionFee;
             if (originatingAccount.getBalance() >= totalAmount) {
                 originatingAccount.withdraw(totalAmount); // Withdraw from originating account
                 resultingAccount.deposit(transaction.getAmount()); // Deposit into resulting account
                 
                 // Update transaction and transfer amounts
-                totalTransactionFeeAmount += flatFee;
+                totalTransactionFeeAmount += transactionFee;
                 totalTransferAmount += transaction.getAmount();
                 transaction.saveToDatabase();
                 updateTransactionAndTransferAmounts();
