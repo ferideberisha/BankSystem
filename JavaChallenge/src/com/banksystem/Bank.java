@@ -10,30 +10,26 @@ public class Bank {
     private double totalTransactionFeeAmount;
     private double totalTransferAmount;
     private double flatFee;
-    private double percentFee;
 
-    public Bank(String bankName, double flatFee, double percentFee) {
+    public Bank(String bankName, double flatFee) {
         this.bankName = bankName;
         this.flatFee = flatFee;
-        this.percentFee = percentFee;
         this.totalTransactionFeeAmount = 0;
         this.totalTransferAmount = 0;
     }
     
     public void saveToDatabase() throws SQLException {
         try (Connection conn = DatabaseConnection.getConnection().getConnectionInstance()) {
-            String sql = "INSERT INTO Bank (bankName, totalTransactionFeeAmount, totalTransferAmount, flatFee, percentFee) VALUES (?, ?, ?, ?, ?)";
+            String sql = "INSERT INTO Bank (bankName, totalTransactionFeeAmount, totalTransferAmount, flatFee) VALUES (?, ?, ?, ?)";
             try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
                 pstmt.setString(1, bankName);
                 pstmt.setDouble(2, totalTransactionFeeAmount);
                 pstmt.setDouble(3, totalTransferAmount);
                 pstmt.setDouble(4, flatFee);
-                pstmt.setDouble(5, percentFee);
                 pstmt.executeUpdate();
             }
         }
     }
-
 
     public static Bank getBank(String bankName) throws SQLException {
         try (Connection conn = DatabaseConnection.getConnection().getConnectionInstance()) {
@@ -44,8 +40,7 @@ public class Bank {
                     if (rs.next()) {
                         return new Bank(
                             rs.getString("bankName"),
-                            rs.getDouble("flatFee"),
-                            rs.getDouble("percentFee")
+                            rs.getDouble("flatFee")
                         );
                     } else {
                         throw new IllegalArgumentException("Bank not found");
@@ -54,7 +49,6 @@ public class Bank {
             }
         }
     }
-
 
     public void updateTransactionAndTransferAmounts() throws SQLException {
         try (Connection conn = DatabaseConnection.getConnection().getConnectionInstance()) {
@@ -68,6 +62,12 @@ public class Bank {
         }
     }
 
+    // Method to calculate transaction fee based on transfer amount
+    public double calculateTransactionFee(double transferAmount) {
+        // Add flat fee to percentage fee
+        double totalFeeAmount = flatFee;
+        return totalFeeAmount;
+    }
 
     public void performTransaction(Transaction transaction) throws SQLException {
         Account originatingAccount = Account.getAccountById(transaction.getOriginatingAccountId());
@@ -75,27 +75,28 @@ public class Bank {
         
         // Check if accounts exist
         if (originatingAccount != null && resultingAccount != null) {
-            // Apply flat fee
-            totalTransactionFeeAmount += flatFee;
-            
-            // Apply percentage fee
-            double percentageFee = (percentFee / 100) * transaction.getAmount();
-            totalTransactionFeeAmount += percentageFee;
-            
+            // Calculate transaction fee
+            double transactionFee = calculateTransactionFee(transaction.getAmount());
+
             // Perform transaction
-            double amount = transaction.getAmount();
-            originatingAccount.withdraw(amount); // Withdraw from originating account
-            resultingAccount.deposit(amount);    // Deposit into resulting account
-            
-            // Update transaction and transfer amounts
-            totalTransferAmount += amount;
-            transaction.saveToDatabase();
-            updateTransactionAndTransferAmounts();
+            double totalAmount = transaction.getAmount() + transactionFee;
+            if (originatingAccount.getBalance() >= totalAmount) {
+                originatingAccount.withdraw(totalAmount); // Withdraw from originating account
+                resultingAccount.deposit(transaction.getAmount()); // Deposit into resulting account
+                
+                // Update transaction and transfer amounts
+                totalTransactionFeeAmount += transactionFee;
+                totalTransferAmount += transaction.getAmount();
+                transaction.saveToDatabase();
+                updateTransactionAndTransferAmounts();
+                System.out.println("Transferred successfully!");
+            } else {
+                System.out.println("Insufficient balance in the originating account.");
+            }
         } else {
             throw new IllegalArgumentException("Invalid accounts for transaction");
         }
     }
-
 
     public double getTotalTransactionFeeAmount() {
         return totalTransactionFeeAmount;
