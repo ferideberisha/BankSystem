@@ -24,7 +24,7 @@ public class Main {
         if (bank == null) {
             // If bank does not exist, create a new one
             try {
-                bank = new Bank(BANK_NAME, FLAT_FEE);
+                bank = new Bank(BANK_NAME, FLAT_FEE,0,0);
                 bank.saveToDatabase();
                 System.out.println("Bank created successfully!");
             } catch (SQLException e) {
