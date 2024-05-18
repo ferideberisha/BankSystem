@@ -17,7 +17,7 @@ This console application simulates a basic bank system where users can create ac
   
 ## Database Setup
 - Create a MySQL database named banksystem.
-- Run the provided SQL scripts to create the necessary tables: Account and Transaction.
+- Run the provided SQL scripts to create the necessary tables: Account, Bank and Transaction.
 Ensure your MySQL server is running and accessible.
 
 ## How to Run
