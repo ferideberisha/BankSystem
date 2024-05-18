@@ -31,6 +31,7 @@ public class Bank {
         }
     }
 
+
     public static Bank getBank(String bankName) throws SQLException {
         try (Connection conn = DatabaseConnection.getConnection().getConnectionInstance()) {
             String sql = "SELECT * FROM Bank WHERE bankName = ?";
@@ -50,6 +51,7 @@ public class Bank {
         }
     }
 
+
     public void updateTransactionAndTransferAmounts() throws SQLException {
         try (Connection conn = DatabaseConnection.getConnection().getConnectionInstance()) {
             String sql = "UPDATE Bank SET totalTransactionFeeAmount = ?, totalTransferAmount = ? WHERE bankName = ?";
@@ -62,12 +64,6 @@ public class Bank {
         }
     }
 
-    // Method to calculate transaction fee based on transfer amount
-    public double calculateTransactionFee(double transferAmount) {
-        // Add flat fee to percentage fee
-        double totalFeeAmount = flatFee;
-        return totalFeeAmount;
-    }
 
     public void performTransaction(Transaction transaction) throws SQLException {
         Account originatingAccount = Account.getAccountById(transaction.getOriginatingAccountId());
@@ -75,17 +71,14 @@ public class Bank {
         
         // Check if accounts exist
         if (originatingAccount != null && resultingAccount != null) {
-            // Calculate transaction fee
-            double transactionFee = calculateTransactionFee(transaction.getAmount());
-
             // Perform transaction
-            double totalAmount = transaction.getAmount() + transactionFee;
+            double totalAmount = transaction.getAmount() + flatFee;
             if (originatingAccount.getBalance() >= totalAmount) {
                 originatingAccount.withdraw(totalAmount); // Withdraw from originating account
                 resultingAccount.deposit(transaction.getAmount()); // Deposit into resulting account
                 
                 // Update transaction and transfer amounts
-                totalTransactionFeeAmount += transactionFee;
+                totalTransactionFeeAmount += flatFee;
                 totalTransferAmount += transaction.getAmount();
                 transaction.saveToDatabase();
                 updateTransactionAndTransferAmounts();
@@ -97,6 +90,7 @@ public class Bank {
             throw new IllegalArgumentException("Invalid accounts for transaction");
         }
     }
+
 
     public double getTotalTransactionFeeAmount() {
         return totalTransactionFeeAmount;
